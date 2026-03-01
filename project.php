@@ -88,10 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id']) && isse
 // Display Catalog
 echo "<h1>Gaming Console Catalog</h1>\n";
 echo "<table border='1' cellpadding='10'>\n";
-echo "<tr><th>Product ID</th><th>Name</th><th>Description</th><th>Cost</th><th>Add to cart</th><th>Cart</th></tr>\n";
+echo "<tr><th>Product ID</th><th>Name</th><th>Description</th><th>Cost</th><th>Add to cart</th><th>Cart</th><th>Product Total</th></tr>\n";
+
+$grandTotal = 0;
 
 foreach ($products as $productKey => $product) {
     $currentQuantity = isset($_SESSION['products'][$productKey]) ? $_SESSION['products'][$productKey] : 0;
+    $productTotal = $currentQuantity * $product["cost"];
+    $grandTotal += $productTotal;
     
     echo "<tr>\n";
     echo "<td>" . htmlspecialchars($product["productID"]) . "</td>\n";
@@ -111,9 +115,15 @@ foreach ($products as $productKey => $product) {
     
     // Cart column displays saved quantity
     echo "<td>" . $currentQuantity . "</td>\n";
+    echo "<td>\$" . number_format($productTotal, 2) . "</td>\n";
     
     echo "</tr>\n";
 }
+
+echo "<tr>\n";
+echo "<td colspan='6' style='text-align: right; font-weight: bold;'>Total Cost of All Products:</td>\n";
+echo "<td style='font-weight: bold;'>\$" . number_format($grandTotal, 2) . "</td>\n";
+echo "</tr>\n";
 
 echo "</table>\n";
 ?>
