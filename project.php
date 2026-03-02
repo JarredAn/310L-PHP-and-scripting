@@ -49,28 +49,43 @@ $products = [
     ]
 ];
 
-// Handle form submission to update quantity
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id']) && isset($_POST['action'])) {
-    $productID = $_POST['product_id'];
+// Handle form submission to update quantity or checkout
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
-    
-    // Ensure this product exists in session
-    if (!isset($_SESSION['products'][$productID])) {
-        $_SESSION['products'][$productID] = 0;
+
+    if ($action === 'checkout') {
+        $checkoutTotal = 0;
+        foreach ($products as $productKey => $product) {
+            $quantity = isset($_SESSION['products'][$productKey]) ? $_SESSION['products'][$productKey] : 0;
+            $checkoutTotal += $quantity * $product["cost"];
+        }
+
+        $_SESSION['checkout_total'] = $checkoutTotal;
+        header("Location: receipt.php");
+        exit();
     }
-    
-    if ($action === 'add') {
-        $_SESSION['products'][$productID]++;
-    } elseif ($action === 'subtract') {
-        $_SESSION['products'][$productID]--;
-        // Ensure quantity doesn't go below 0
-        if ($_SESSION['products'][$productID] < 0) {
+
+    if (isset($_POST['product_id'])) {
+        $productID = $_POST['product_id'];
+
+        // Ensure this product exists in session
+        if (!isset($_SESSION['products'][$productID])) {
             $_SESSION['products'][$productID] = 0;
         }
-    } elseif ($action === 'delete') {
-        $_SESSION['products'][$productID] = 0;
+
+        if ($action === 'add') {
+            $_SESSION['products'][$productID]++;
+        } elseif ($action === 'subtract') {
+            $_SESSION['products'][$productID]--;
+            // Ensure quantity doesn't go below 0
+            if ($_SESSION['products'][$productID] < 0) {
+                $_SESSION['products'][$productID] = 0;
+            }
+        } elseif ($action === 'delete') {
+            $_SESSION['products'][$productID] = 0;
+        }
     }
-    
+
     // Redirect to prevent form resubmission
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
@@ -123,6 +138,11 @@ foreach ($products as $productKey => $product) {
 echo "<tr>\n";
 echo "<td colspan='6' style='text-align: right; font-weight: bold;'>Total Cost of All Products:</td>\n";
 echo "<td style='font-weight: bold;'>\$" . number_format($grandTotal, 2) . "</td>\n";
+echo "</tr>\n";
+
+echo "<tr>\n";
+echo "<td colspan='6'></td>\n";
+echo "<td><form method='POST'><button type='submit' name='action' value='checkout'>Checkout</button></form></td>\n";
 echo "</tr>\n";
 
 echo "</table>\n";
